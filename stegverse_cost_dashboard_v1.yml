@@ -1,0 +1,88 @@
+stegverse_cost_dashboard_v1:
+  version: 1.0.0
+  timestamp: '2026-04-30T21:36:00Z'
+  description: Real-time cost tracking and comparison for demonstration runs
+  baseline_config:
+    name: Unoptimized (Liam Price-style)
+    model: gpt-5.4-pro
+    batch_api: false
+    prompt_caching: false
+    pricing:
+      input_per_mtok: 30.0
+      output_per_mtok: 180.0
+      thinking_per_mtok: 180.0
+    typical_problem_cost:
+      input_tokens: 5000
+      output_tokens: 15000
+      thinking_tokens: 100000
+      total_estimated_usd: 300.0
+  optimized_config:
+    name: StegVerse-Optimized
+    primary_model: claude-sonnet-4-6
+    backup_model: claude-opus-4-6
+    batch_api: true
+    prompt_caching: true
+    pricing:
+      sonnet_input_per_mtok: 3.0
+      sonnet_output_per_mtok: 15.0
+      sonnet_batch_discount: 0.5
+      opus_input_per_mtok: 5.0
+      opus_output_per_mtok: 25.0
+      opus_batch_discount: 0.5
+      cache_read_discount: 0.1
+      cache_write_multiplier: 1.25
+    typical_problem_cost:
+      sonnet_input_tokens: 5000
+      sonnet_output_tokens: 15000
+      sonnet_thinking_tokens: 100000
+      batch_discount: 0.5
+      cache_hit_ratio: 0.6
+      total_estimated_usd: 45.0
+  comparison_metrics:
+    cost_reduction_percent: 85.0
+    time_to_proof_hours:
+      baseline: 168
+      optimized: 48
+    reproducibility:
+      baseline: variable
+      optimized: 100% seeded
+    implications_harvested:
+      baseline: 0-1 manual
+      optimized: 3-8 auto
+  demonstration_protocol:
+    problem_selection:
+      count: 5
+      mix:
+      - "Erd\u0151s collection (external)"
+      - StegVerse-native (GCAT/BCAT)
+      - StegVerse-native (GOD)
+      - StegVerse-native (ECAT/ICAT)
+      - Clay Millennium (external)
+    execution_steps:
+    - Configure TV/TVC with Anthropic API keys (ephemeral)
+    - 'Run baseline: unoptimized single LLM, standard API pricing'
+    - Document cost, latency, success rate
+    - 'Run optimized: StegVerse pipeline with batch/cache/tiering'
+    - Document cost, latency, success rate
+    - Compare and generate report
+    - 'For solved problems: formalize, verify, publish'
+    report_outputs:
+    - cost_comparison_report.yml
+    - solved_proofs_bundle/
+    - methodology_paper_draft.tex
+    - stegverse_platform_paper_draft.tex
+  real_time_tracking:
+    metrics:
+    - cumulative_spend_usd
+    - tokens_consumed
+    - cache_hit_rate
+    - batch_savings_usd
+    - problems_attempted
+    - problems_solved
+    - implications_generated
+    - sandbox_executions
+    - human_reviews_triggered
+    alert_thresholds:
+      daily_spend: 100.0
+      per_problem_spend: 200.0
+      budget_ceiling_approach: 0.8
