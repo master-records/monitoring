@@ -1,0 +1,34 @@
+stegdb_monitor_v1:
+  version: 1.0.0
+  timestamp: '2026-05-02T00:30:00Z'
+  monitored_orgs:
+  - StegVerse-Labs
+  - StegVerse-org
+  - GCAT-BCAT-Engine
+  - StegGhost
+  - ECAT-ICAT-Formal
+  - AaCT-E
+  - master-records
+  log_level: debug
+  retention_days: 30
+  sync_mode: async
+  batch_interval_seconds: 300
+  metrics:
+  - cumulative_spend_usd
+  - tokens_consumed
+  - cache_hit_rate
+  - batch_savings_usd
+  - problems_attempted
+  - problems_solved
+  - implications_generated
+  - sandbox_executions
+  - human_reviews_triggered
+  - novel_proofs_published
+  alert_thresholds:
+    daily_spend: 100.0
+    per_problem_spend: 200.0
+    budget_ceiling_approach: 0.8
+    novelty_spike_detected: 0.95
+  audit_completeness: true
+  cost_accounting: true
+  cross_org_visibility: true
