@@ -1,0 +1,29 @@
+baseline_measurement_protocol_v1:
+  version: 1.0.0
+  timestamp: '2026-05-02T00:30:00Z'
+  purpose: Establish unoptimized cost floor for comparison against StegVerse-optimized
+    pipeline
+  methodology:
+    mode: unoptimized
+    model: claude-opus-4-6
+    batch_api: false
+    prompt_caching: false
+    extended_thinking: true
+    seed_determinism: false
+  measurement_points:
+  - Total API cost per problem
+  - Total tokens consumed (input/output/thinking)
+  - Time to first proof sketch
+  - Time to verified proof
+  - Human intervention count
+  - Implications identified
+  - Trace completeness
+  problems_to_baseline:
+  - SV-MATH-001 (GCAT/BCAT admissibility)
+  - "Erd\u0151s collection candidate (external)"
+  - GOD compression irreducibility (native)
+  comparison_framework:
+    baseline_cost: unoptimized_total
+    optimized_cost: stegverse_pipeline_total
+    reduction_target: 50%+
+    documentation: Publish comparison in methodology paper
