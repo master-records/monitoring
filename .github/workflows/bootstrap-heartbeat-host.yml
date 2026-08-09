@@ -1,0 +1,209 @@
+name: Bootstrap Master Records Heartbeat Host
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: master-records-heartbeat-host-bootstrap
+  cancel-in-progress: false
+
+env:
+  HEALTH_URL: https://master-records-heartbeat-host.onrender.com/health
+  STATE_FILE: bootstrap/heartbeat-host-bootstrap-state.json
+  RECEIPT_ISSUE: "2"
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Stop when durable bootstrap receipt is already closed
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${RECEIPT_ISSUE}" --jq .state)"
+          echo "state=${state}" >> "$GITHUB_OUTPUT"
+
+      - name: Probe host health
+        if: steps.issue.outputs.state != 'closed'
+        id: probe
+        shell: bash
+        run: |
+          set +e
+          curl -fsS --connect-timeout 10 --max-time 20 "$HEALTH_URL" -o /tmp/heartbeat-health.json
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            echo "reachable=true" >> "$GITHUB_OUTPUT"
+          else
+            printf '{}\n' > /tmp/heartbeat-health.json
+            echo "reachable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Advance bounded bootstrap state machine
+        if: steps.issue.outputs.state != 'closed'
+        id: state
+        env:
+          REACHABLE: ${{ steps.probe.outputs.reachable }}
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          from pathlib import Path
+
+          state_path = Path(os.environ["STATE_FILE"])
+          health_path = Path("/tmp/heartbeat-health.json")
+          state = json.loads(state_path.read_text())
+          health = json.loads(health_path.read_text())
+          now = dt.datetime.now(dt.timezone.utc).isoformat()
+          reachable = os.environ.get("REACHABLE") == "true"
+          phase = state.get("phase")
+          mode = "noop"
+          mutated = False
+
+          def healthy(h):
+              return (
+                  reachable
+                  and h.get("status") == "RUNNING"
+                  and h.get("persistent_state") == "PASS"
+                  and h.get("execution_authority_from_host") is False
+                  and h.get("heartbeat_timing_authority_from_provider") is False
+                  and isinstance(h.get("heartbeat_epoch"), int)
+              )
+
+          if not healthy(health):
+              state["retry_generation"] = int(state.get("retry_generation", 0)) + 1
+              state["last_probe_at"] = now
+              state["last_probe_result"] = "NOT_LIVE_OR_NOT_DURABLE"
+              mode = "retry_deploy"
+              mutated = True
+          elif phase == "WAITING_FOR_FIRST_LIVE":
+              epoch = int(health["heartbeat_epoch"])
+              if epoch <= int(state.get("pre_activation_epoch", 3)):
+                  state["last_probe_at"] = now
+                  state["last_probe_result"] = "LIVE_WAITING_FOR_EPOCH_ADVANCE"
+                  mode = "wait"
+                  mutated = True
+              else:
+                  state["pre_restart"] = {
+                      "observed_at": now,
+                      "heartbeat_epoch": epoch,
+                      "registry_generation": health.get("registry_generation"),
+                      "active_claims": health.get("active_claims", {}),
+                      "active_fencing_tokens": health.get("active_fencing_tokens", {}),
+                      "snapshot_sha256": health.get("last_snapshot_sha256"),
+                      "source_sha": health.get("source_sha")
+                  }
+                  state["phase"] = "RESTART_REQUESTED"
+                  state["last_probe_at"] = now
+                  state["last_probe_result"] = "FIRST_LIVE_PASS_RESTART_REQUESTED"
+                  mode = "request_restart"
+                  mutated = True
+          elif phase == "RESTART_REQUESTED":
+              pre = state.get("pre_restart") or {}
+              post_epoch = int(health["heartbeat_epoch"])
+              pre_epoch = int(pre.get("heartbeat_epoch", -1))
+              pre_generation = pre.get("registry_generation")
+              post_generation = health.get("registry_generation")
+              duplicate_claims = health.get("duplicate_claim_ids") or []
+              duplicate_fences = health.get("duplicate_fencing_tokens") or []
+              restored = health.get("restored_previous_snapshot") is True
+              generation_ok = (
+                  isinstance(pre_generation, int)
+                  and isinstance(post_generation, int)
+                  and post_generation >= pre_generation
+              )
+              continuity_ok = (
+                  restored
+                  and post_epoch >= pre_epoch
+                  and generation_ok
+                  and not duplicate_claims
+                  and not duplicate_fences
+              )
+              if continuity_ok:
+                  receipt = {
+                      "schema": "stegverse.heartbeat-host-activation-receipt/v0.1",
+                      "goal_id": state["goal_id"],
+                      "task_id": state["task_id"],
+                      "observed_at": now,
+                      "service_id": state["service_id"],
+                      "health_url": state["health_url"],
+                      "pre_restart": pre,
+                      "post_restart": {
+                          "heartbeat_epoch": post_epoch,
+                          "registry_generation": post_generation,
+                          "active_claims": health.get("active_claims", {}),
+                          "active_fencing_tokens": health.get("active_fencing_tokens", {}),
+                          "duplicate_claim_ids": duplicate_claims,
+                          "duplicate_fencing_tokens": duplicate_fences,
+                          "snapshot_sha256": health.get("last_snapshot_sha256"),
+                          "source_sha": health.get("source_sha"),
+                          "restored_previous_snapshot": restored
+                      },
+                      "persistent_state": "PASS",
+                      "restart_continuity": "PASS",
+                      "duplicate_claim_fence_check": "PASS",
+                      "provider_timing_authority": False,
+                      "host_execution_authority": False
+                  }
+                  Path("/tmp/heartbeat-activation-receipt.json").write_text(
+                      json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+                  )
+                  mode = "complete"
+              else:
+                  state["retry_generation"] = int(state.get("retry_generation", 0)) + 1
+                  state["last_probe_at"] = now
+                  state["last_probe_result"] = "RESTART_CONTINUITY_NOT_YET_PROVEN"
+                  mode = "retry_restart"
+                  mutated = True
+          elif phase == "COMPLETE":
+              mode = "noop"
+          else:
+              raise SystemExit(f"unknown bootstrap phase: {phase!r}")
+
+          if mutated:
+              state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"mode={mode}\n")
+              out.write(f"mutated={'true' if mutated else 'false'}\n")
+          print(json.dumps({"mode": mode, "phase": state.get("phase"), "retry_generation": state.get("retry_generation")}, sort_keys=True))
+          PY
+
+      - name: Persist retry or restart request and trigger Render auto-deploy
+        if: steps.issue.outputs.state != 'closed' && steps.state.outputs.mutated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$STATE_FILE"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: advance heartbeat host bootstrap [skip ci]"
+          git push origin HEAD:main
+
+      - name: Record restart-continuity activation receipt and close bootstrap issue
+        if: steps.issue.outputs.state != 'closed' && steps.state.outputs.mode == 'complete'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          receipt="$(cat /tmp/heartbeat-activation-receipt.json)"
+          body=$(printf 'Heartbeat host activation receipt:\n\n```json\n%s\n```\n\nThis receipt records runtime liveness, durable-state restoration, heartbeat epoch continuity, and duplicate claim/fence checks. The bootstrap workflow does not grant execution authority and is not heartbeat timing authority.' "$receipt")
+          gh api "repos/${GITHUB_REPOSITORY}/issues/${RECEIPT_ISSUE}/comments" -f body="$body" >/dev/null
+          gh issue close "$RECEIPT_ISSUE" --repo "$GITHUB_REPOSITORY" --reason completed
+
+      - name: Bootstrap invariant
+        if: always() && steps.issue.outputs.state != 'closed'
+        run: |
+          echo "Bootstrap may trigger deployment retries only. It is never StegVerse heartbeat cadence or worker execution authority."
