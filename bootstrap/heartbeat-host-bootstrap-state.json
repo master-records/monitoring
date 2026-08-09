@@ -1,17 +1,17 @@
 {
-  "schema": "stegverse.heartbeat-host-bootstrap-state/v0.1",
+  "bootstrap_grants_execution_authority": false,
+  "bootstrap_is_heartbeat_authority": false,
+  "completed": false,
   "goal_id": "STEGVERSE-HEARTBEAT-WORKER-PROTOCOL-001",
-  "task_id": "SHWP-DURABLE-RUNTIME-ACTIVATION",
-  "issue_ref": "master-records/monitoring#2",
-  "service_id": "srv-d9s197vavr4c73a8rjjg",
   "health_url": "https://master-records-heartbeat-host.onrender.com/health",
+  "issue_ref": "master-records/monitoring#2",
+  "last_probe_at": "2026-08-09T09:20:00.332871+00:00",
+  "last_probe_result": "NOT_LIVE_OR_NOT_DURABLE",
   "phase": "WAITING_FOR_FIRST_LIVE",
-  "retry_generation": 0,
   "pre_activation_epoch": 3,
   "pre_restart": null,
-  "last_probe_at": null,
-  "last_probe_result": "NOT_RUN",
-  "completed": false,
-  "bootstrap_is_heartbeat_authority": false,
-  "bootstrap_grants_execution_authority": false
+  "retry_generation": 1,
+  "schema": "stegverse.heartbeat-host-bootstrap-state/v0.1",
+  "service_id": "srv-d9s197vavr4c73a8rjjg",
+  "task_id": "SHWP-DURABLE-RUNTIME-ACTIVATION"
 }
