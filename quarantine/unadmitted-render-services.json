@@ -1,0 +1,29 @@
+{
+  "schema": "stegverse.render-service-quarantine/v0.1",
+  "goal_id": "STEGVERSE-HEARTBEAT-WORKER-PROTOCOL-001",
+  "issue_ref": "master-records/monitoring#3",
+  "canonical_authorized_service_id": "srv-d9s197vavr4c73a8rjjg",
+  "state": "BLOCKED_TOOL_CAPABILITY",
+  "authority_effect": "NONE",
+  "quarantined_services": [
+    {"id": "srv-d9s48non74is73fu0160", "name": "noop", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s48rqjobas73eip1u0", "name": "dummy-cancel", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s48tijnfac738psgmg", "name": "x", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s491n40ujc73cj6oq0", "name": "stop-do-not-use", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s494ajnfac738psv80", "name": "DO-NOT-CALL", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s496ijnfac738pt350", "name": "bad", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s498on74is73fu0vr0", "name": "ERROR", "plan": "free", "auto_deploy": false},
+    {"id": "srv-d9s49bp42hec73bn1p20", "name": "PLEASE-IGNORE", "plan": "free", "auto_deploy": false}
+  ],
+  "prohibited_use": [
+    "heartbeat_host",
+    "heartbeat_worker",
+    "state_store",
+    "deployment_substitute",
+    "authority_source"
+  ],
+  "owner": "master-records/monitoring#3",
+  "release_condition": "all quarantined service IDs are absent from Render service inventory",
+  "blocker": "connected Render controls currently expose no service-deletion action",
+  "next_action": "delete all quarantined services when an authorized delete-service control becomes available and bind inventory evidence to issue #3"
+}
