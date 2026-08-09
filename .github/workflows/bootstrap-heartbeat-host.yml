@@ -1,6 +1,11 @@
 name: Bootstrap Master Records Heartbeat Host
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/bootstrap-heartbeat-host.yml"
+      - "bootstrap/heartbeat-host-bootstrap-state.json"
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
@@ -20,6 +25,7 @@ env:
 
 jobs:
   bootstrap:
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
