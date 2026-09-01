@@ -7,7 +7,7 @@ def ledger_root():
     if override:return Path(override).expanduser().resolve()
     return (Path(os.getenv("XDG_STATE_HOME",str(Path.home()/".local/state")))/"stegverse/ecosystem-ledger").resolve()
 
-def build_projection(root:Path):
+def build_projection(root:Path, sv002_reconstruction:Path|None=None):
     receipts=root/"receipts";rows=[]
     if receipts.exists():
         for fp in sorted(receipts.glob("*.json")):
@@ -35,6 +35,23 @@ def build_projection(root:Path):
         }
         for index,r in enumerate(rows)
     ]
+    sv002_reference=None
+    if sv002_reconstruction is not None and sv002_reconstruction.is_file():
+        try:
+            rec=json.loads(sv002_reconstruction.read_text())
+            ev=rec.get("evidence") if isinstance(rec,dict) and isinstance(rec.get("evidence"),dict) else {}
+            if rec.get("experiment_id")=="STEGVERSE-002-SELF-CHARACTERIZATION-001":
+                sv002_reference={
+                    "experiment_id":rec.get("experiment_id"),
+                    "status":rec.get("status"),
+                    "reconstruction":rec.get("reconstruction"),
+                    "ordered_transition_receipts":ev.get("ordered_transition_receipts"),
+                    "repository_ledger_root":ev.get("repository_ledger_root"),
+                    "organization_ledger_root":ev.get("organization_ledger_root"),
+                    "transition_receipt_terminal_sha256":ev.get("transition_receipt_terminal_sha256"),
+                }
+        except Exception:
+            sv002_reference=None
     return {
         "schema":"master-records.ecosystem-ledger-monitoring-projection/v2",
         "read_only":True,
@@ -43,6 +60,7 @@ def build_projection(root:Path):
         "by_organization":dict(sorted(by_org.items())),
         "head":head,
         "ordered_custody_receipts":ordered,
+        "sv002_self_characterization_reference":sv002_reference,
         "sequence_verification":{
             "complete_for_projected_ecosystem_custody_receipts":True,
             "principal_transition_sequence_available_only_when_present_in_canonical_reconstruction_receipt":True,
@@ -52,8 +70,9 @@ def build_projection(root:Path):
     }
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument("--out");a=p.parse_args()
-    projection=build_projection(ledger_root())
+    p=argparse.ArgumentParser();p.add_argument("--out");p.add_argument("--sv002-reconstruction");a=p.parse_args()
+    source=a.sv002_reconstruction or os.getenv("STEGVERSE_SV002_RECONSTRUCTION_RECEIPT")
+    projection=build_projection(ledger_root(),Path(source).expanduser().resolve() if source else None)
     text=json.dumps(projection,indent=2,sort_keys=True)+"\n"
     if a.out: Path(a.out).write_text(text)
     print(text,end="")

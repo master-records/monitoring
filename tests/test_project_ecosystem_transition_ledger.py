@@ -44,5 +44,31 @@ class MonitoringProjectionTests(unittest.TestCase):
             self.assertEqual(projection["ordered_custody_receipts"][1]["previous_receipt_sha256"],rows[0]["receipt_sha256"])
             self.assertFalse(projection["custody_authority"])
 
+
+    def test_projection_can_expose_sv002_principal_sequence_reference(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); (root/"receipts").mkdir()
+            reconstruction=root/"sv002-reconstruction.json"
+            reconstruction.write_text(json.dumps({
+                "experiment_id":"STEGVERSE-002-SELF-CHARACTERIZATION-001",
+                "status":"PASS",
+                "reconstruction":"PASS",
+                "evidence":{
+                    "ordered_transition_receipts":[
+                        {"sequence":0,"transition_receipt_id":"TR-1","transition_receipt_sha256":"a"*64}
+                    ],
+                    "repository_ledger_root":{"root_hash":"b"*64},
+                    "organization_ledger_root":{"root_hash":"c"*64},
+                    "transition_receipt_terminal_sha256":"a"*64,
+                },
+            }),encoding="utf-8")
+            projection=mod.build_projection(root,reconstruction)
+            ref=projection["sv002_self_characterization_reference"]
+            self.assertEqual(ref["status"],"PASS")
+            self.assertEqual(ref["ordered_transition_receipts"][0]["transition_receipt_id"],"TR-1")
+            self.assertEqual(ref["repository_ledger_root"]["root_hash"],"b"*64)
+            self.assertFalse(projection["custody_authority"])
+
+
 if __name__=="__main__":
     unittest.main()
