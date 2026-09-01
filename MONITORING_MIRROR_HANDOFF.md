@@ -103,3 +103,18 @@ third-party deployment dependency: REMOVED
 custody/reconstruction role: RETAINED
 scaffolding_or_stubs: 0
 ```
+
+
+## SV002 ordered reconstruction reference projection — 2026-09-01
+
+The read-only ecosystem monitoring projector can now accept a canonical SV002 reconstruction receipt through `--sv002-reconstruction` or `STEGVERSE_SV002_RECONSTRUCTION_RECEIPT`.
+
+When present and experiment-bound, the projection exposes:
+
+- ordered transition receipt identities and hashes;
+- repository ledger root and hash;
+- organization ledger root and hash;
+- terminal transition receipt hash;
+- reconstruction status.
+
+This preserves monitoring as a non-authorizing read-only projection while providing a retrieval path independent of the viewer's InTr observation crossing for sequence-level comparison. It does not become custody authority and does not reconstruct or mutate the canonical ledger.
