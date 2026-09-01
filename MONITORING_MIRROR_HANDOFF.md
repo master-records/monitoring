@@ -116,3 +116,12 @@ This improves independent-path sequence inspection while preserving the monitori
 - principal transition sequence is still sourced from the canonical SV002 reconstruction receipt when that evidence exists.
 
 Frozen StegVerse-002 experiment condition remains v0.3; this is observer/evidence implementation only.
+
+
+## SV002 principal-sequence reference projection — 2026-09-01
+
+The read-only monitoring projector may now bind an exact canonical SV002 reconstruction receipt through `--sv002-reconstruction` or `STEGVERSE_SV002_RECONSTRUCTION_RECEIPT`.
+
+When present and experiment-bound, the projection exposes the ordered principal transition receipt identities/hashes plus repository and organization ledger roots. This supplements the existing ordered ecosystem custody chain and provides a retrieval path independent of the viewer's InTr crossing for post-reconstruction sequence comparison.
+
+Monitoring remains read-only and non-authorizing. It does not reconstruct, mutate, or become custody authority.
