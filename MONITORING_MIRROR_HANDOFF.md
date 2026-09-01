@@ -103,3 +103,16 @@ third-party deployment dependency: REMOVED
 custody/reconstruction role: RETAINED
 scaffolding_or_stubs: 0
 ```
+
+
+## v0.7 ordered custody projection — 2026-09-01
+
+The read-only monitoring projection now emits an ordered identity chain for every projected ecosystem custody receipt, including current/previous receipt SHA-256, source organization receipt SHA-256, repository receipt SHA-256, and repository transition ID.
+
+This improves independent-path sequence inspection while preserving the monitoring boundary:
+- monitoring remains read-only;
+- custody authority remains Master Records orchestration;
+- counts/HEAD are no longer the only projected identity data;
+- principal transition sequence is still sourced from the canonical SV002 reconstruction receipt when that evidence exists.
+
+Frozen StegVerse-002 experiment condition remains v0.3; this is observer/evidence implementation only.
