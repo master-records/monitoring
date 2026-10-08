@@ -18,7 +18,7 @@ session_dependency: false
 
 ## Authority correction
 
-Master Records remains evidence/custody/reconstruction authority through `master-records/orchestration`. It is **not** heartbeat process-host authority.
+Master Records relates to organization records/reconstruction through `master-records/orchestration`; the Organization owns custody and evidence retention. Master Records is **not** heartbeat process-host authority.
 
 The former Render service and Render Key Value resources were an attempted bootstrap path and are no longer canonical production dependencies. Provider build capacity, Render availability, GitHub Actions availability, or any other third-party hosting state must not gate StegVerse heartbeat activation.
 
@@ -72,10 +72,10 @@ The current control plane also has direct heartbeat-owned worker execution evide
 
 ## Remaining obligations
 
-1. Preserve Master Records custody/reconstruction authority for heartbeat evidence.
+1. Preserve the Master Records organization records/reconstruction role for heartbeat records.
 2. Do not revive issue #2 or the Render bootstrap as a production dependency.
 3. Retain issue #3 as the independent cleanup owner for unintended/retired Render resources until deletion is possible.
-4. Accept heartbeat lifecycle/custody records from the canonical sovereign runtime when produced.
+4. Record heartbeat lifecycle records from the canonical sovereign runtime as organization records when produced.
 
 ## Validation / release condition
 
@@ -85,7 +85,7 @@ This supersession is complete when:
 - legacy bootstrap workflow has no schedule/push mutation path;
 - master-records/monitoring#2 is closed SUPERSEDED;
 - StegVerse-Labs/.github#12 records sovereign-host ownership;
-- Master Records remains custody/reconstruction only.
+- Master Records remains organization records/reconstruction only.
 ```
 
 No user action is required to maintain the old provider path.
@@ -100,18 +100,18 @@ The old Render bootstrap implementation and failure history remain inspectable h
 legacy provider-host role: SUPERSEDED
 scheduled third-party bootstrap: REMOVED
 third-party deployment dependency: REMOVED
-custody/reconstruction role: RETAINED
+organization records/reconstruction role: RETAINED
 scaffolding_or_stubs: 0
 ```
 
 
-## v0.7 ordered custody projection — 2026-09-01
+## v0.7 ordered organization-record projection — 2026-09-01
 
-The read-only monitoring projection now emits an ordered identity chain for every projected ecosystem custody receipt, including current/previous receipt SHA-256, source organization receipt SHA-256, repository receipt SHA-256, and repository transition ID.
+The read-only monitoring projection now emits an ordered identity chain for every projected ecosystem organization-record receipt (`ordered_organization_record_receipts`), including current/previous receipt SHA-256, source organization receipt SHA-256, repository receipt SHA-256, and repository transition ID.
 
 This improves independent-path sequence inspection while preserving the monitoring boundary:
 - monitoring remains read-only;
-- custody authority remains Master Records orchestration;
+- Master Records orchestration keeps the organization records; the Organization owns custody;
 - counts/HEAD are no longer the only projected identity data;
 - principal transition sequence is still sourced from the canonical SV002 reconstruction receipt when that evidence exists.
 
@@ -122,6 +122,6 @@ Frozen StegVerse-002 experiment condition remains v0.3; this is observer/evidenc
 
 The read-only monitoring projector may now bind an exact canonical SV002 reconstruction receipt through `--sv002-reconstruction` or `STEGVERSE_SV002_RECONSTRUCTION_RECEIPT`.
 
-When present and experiment-bound, the projection exposes the ordered principal transition receipt identities/hashes plus repository and organization ledger roots. This supplements the existing ordered ecosystem custody chain and provides a retrieval path independent of the viewer's InTr crossing for post-reconstruction sequence comparison.
+When present and experiment-bound, the projection exposes the ordered principal transition receipt identities/hashes plus repository and organization ledger roots. This supplements the existing ordered ecosystem organization-record chain and provides a retrieval path independent of the viewer's InTr crossing for post-reconstruction sequence comparison.
 
-Monitoring remains read-only and non-authorizing. It does not reconstruct, mutate, or become custody authority.
+Monitoring remains read-only and non-authorizing. It does not reconstruct, mutate, or keep organization records, and it holds no custody or other authority.
