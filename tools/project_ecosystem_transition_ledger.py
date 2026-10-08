@@ -2,6 +2,14 @@
 import argparse,json,os
 from pathlib import Path
 
+# Master Records organization-record receipt schema (MASTER-RECORDS-BULK-SEMANTIC-REMEDIATION-002).
+ORGANIZATION_RECORD_RECEIPT_SCHEMA="stegverse.ecosystem-transition-organization-record-receipt/v1"
+# Legacy schema id from before the Master Records boundary migration
+# (MASTER-RECORDS-BULK-SEMANTIC-REMEDIATION-002); still accepted so receipts written
+# by already-deployed peers keep projecting.
+LEGACY_ORGANIZATION_RECORD_RECEIPT_SCHEMA="stegverse.ecosystem-transition-custody-receipt/v1"
+ACCEPTED_RECEIPT_SCHEMAS=frozenset({ORGANIZATION_RECORD_RECEIPT_SCHEMA,LEGACY_ORGANIZATION_RECORD_RECEIPT_SCHEMA})
+
 def ledger_root():
     override=os.getenv("STEGVERSE_ECOSYSTEM_LEDGER_ROOT")
     if override:return Path(override).expanduser().resolve()
@@ -13,7 +21,7 @@ def build_projection(root:Path, sv002_reconstruction:Path|None=None):
         for fp in sorted(receipts.glob("*.json")):
             try:
                 r=json.loads(fp.read_text())
-                if r.get("schema")=="stegverse.ecosystem-transition-custody-receipt/v1":
+                if r.get("schema") in ACCEPTED_RECEIPT_SCHEMAS:
                     rows.append(r)
             except Exception:
                 pass
@@ -55,14 +63,16 @@ def build_projection(root:Path, sv002_reconstruction:Path|None=None):
     return {
         "schema":"master-records.ecosystem-ledger-monitoring-projection/v2",
         "read_only":True,
+        # Field name kept: StegVerse-Labs/.github consume_master_records_monitoring_projection.py
+        # reads it. It asserts the projection holds no authority of any kind.
         "custody_authority":False,
         "transition_count":len(rows),
         "by_organization":dict(sorted(by_org.items())),
         "head":head,
-        "ordered_custody_receipts":ordered,
+        "ordered_organization_record_receipts":ordered,
         "sv002_self_characterization_reference":sv002_reference,
         "sequence_verification":{
-            "complete_for_projected_ecosystem_custody_receipts":True,
+            "complete_for_projected_ecosystem_organization_record_receipts":True,
             "principal_transition_sequence_available_only_when_present_in_canonical_reconstruction_receipt":True,
         },
         "source":"master-records/orchestration ecosystem transition ledger",
